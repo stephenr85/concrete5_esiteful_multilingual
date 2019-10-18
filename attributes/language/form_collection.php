@@ -11,11 +11,13 @@ echo $form->select($this->field('value'), $localeOptions, $value, [
 <?php
 foreach($availableLocales as $locale) {
 	if($locale->getLocale() == $value) continue; // skip already selected locale
-
+	if($relations[$locale]) {
+		$relationOwnerID = $relations[$locale]->getCollectionID();
+	}
 	//TODO get current relationID
 ?>
 <div class="form-group">
 	<?=$form->label($this->field($locale->getLocale()), t($locale->getLanguageText()))?>
-	<?=$pageSelector->selectPage($this->field($locale->getLocale()), isset($link_cID) ? $link_cID : null)?>
+	<?=$pageSelector->selectPage($this->field($locale->getLocale()), $relationOwnerID)?>
 </div>
 <?php } ?>

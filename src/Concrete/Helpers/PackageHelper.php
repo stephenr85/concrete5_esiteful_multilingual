@@ -103,7 +103,7 @@ class PackageHelper
             }
         }
         $this->getEntityManager()->persist($attrKey);
-        $this->getEntityManager()->persist($attrKeyController->getAttributeKeySettings());
+        $attrKeyController->saveKey($data);
 
         // Add attribute key to set
         if(is_string($attrSet)){
