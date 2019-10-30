@@ -103,7 +103,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 			}
 			$data[$relation[0]] = $relation[1];
 		}
-		\Log::addInfo(t(__CLASS__.'::parseAttributeValueTextRepresentation: %s'."\n%s", $textRepresentation, print_r($data, true)));
+		//\Log::addInfo(t(__CLASS__.'::parseAttributeValueTextRepresentation: %s'."\n%s", $textRepresentation, print_r($data, true)));
 		return $data;
 	}
 
@@ -164,6 +164,9 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 				return $compare;
 			}
 		}
+		if($value == 'es') return 'es_MX';
+		elseif($value == 'en') return 'en_US';
+
 		return $value;
 	}
 
@@ -171,7 +174,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 	{
 		//throw new Exception(__CLASS__.'::saveValue');
 		//dd($value);
-		\Log::addInfo(print_r($value, true));
+		//\Log::addInfo(print_r($value, true));
 		$data = null;
 		if(is_array($value)) {
 			$data = $value;
@@ -192,6 +195,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		$db->Replace('atLanguage', [
 			'avID' => $this->getAttributeValueID(),
 			'value' => $value,
+			'akcHandle' => $this->getAttributeKeyCategoryHandle(),
 			'relationID' => $relationID
 		], 'avID', true);
 
@@ -394,11 +398,5 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 	{
 		$site = $this->getSite();
 		return $site->getLocales();
-
-		foreach ($site->getLocales() as $_locale) {
-            if ($_locale->getLocale() == $localeCode) {
-                $locale = $_locale;
-            }
-        }
 	}
 }

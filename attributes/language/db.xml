@@ -11,6 +11,9 @@
       <notnull/>
     </field>
     <field name="relationID" type="guid"/>
+    <field name="akcHandle" type="string" size="32">
+      <notnull/>
+    </field>
   </table>
 
 </schema>
