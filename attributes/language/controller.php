@@ -33,12 +33,12 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
     }
 
 	public function getValue($mode = false)
-	{		
+	{
 		if($this->isValueInferred()) {
 			$value = $this->getInferredValue();
 		} else {
 			$value = $this->getRawValue();
-		}		
+		}
 		return $value;
 	}
 
@@ -109,9 +109,9 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 
 	public function updateAttributeValueFromTextRepresentation($textRepresentation, \Concrete\Core\Error\ErrorList\ErrorList $warnings)
 	{
-		$data = $this->parseAttributeValueTextRepresentation($textRepresentation);		
+		$data = $this->parseAttributeValueTextRepresentation($textRepresentation);
 		return $this->createAttributeValue($data);
-	}	
+	}
 
 	public function importValue(\SimpleXMLElement $akv)
 	{
@@ -146,7 +146,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 
 		if($attrValue) {
 			$this->set('relations', $this->getRelationsHash());
-		}		
+		}
 	}
 
 	// If a language or country code is passed, normalize it
@@ -184,39 +184,75 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 			$relationID = $data['relationID'];
 			unset($data['relationID']);
 		}
-		
+
 		if(!$relationID) {
 			$relationID = $this->getRelationID();
 		}
 
+        $akcHandle = $this->getAttributeKeyCategoryHandle();
 		$value = $this->normalizeValue($value);
 
 		$db = \Database::get();
 		$db->Replace('atLanguage', [
 			'avID' => $this->getAttributeValueID(),
 			'value' => $value,
-			'akcHandle' => $this->getAttributeKeyCategoryHandle(),
+			'akcHandle' => $akcHandle,
 			'relationID' => $relationID
 		], 'avID', true);
 
 		if(is_array($data)) {
 			$oID = $this->getAttributeValueOwnerID();
-			
+
 			$hash = $this->getRelationsHash();
-			foreach($data as $lang => $id) {
+			foreach($data as $locale => $id) {
 				if($id > 0) {
-					$this->saveRelation($lang, $id);
-				} else if(is_object($hash[$lang])) {
-					$hash[$lang]->getAttributeValueObject($this->getAttributeKey(), true)->getController()->deleteRelation();
+					$this->saveRelation($locale, $id);
+				} else if(is_object($hash[$locale])) {
+					$hash[$locale]->getAttributeValueObject($this->getAttributeKey(), true)->getController()->deleteRelation();
 				}
-				
+
 			}
 		}
+
+
 	}
+
+    public function pushMultilingualData()
+    {
+        $akcHandle = $this->getAttributeKeyCategoryHandle();
+        if($akcHandle == 'collection') {
+            $page = $this->getAttributeValueOwnerObject();
+            $mpRelationID = Section::registerPage($page);
+            $hash = $this->getRelationsHash();
+            foreach($hash as $locale => $otherPage) {
+                Section::relatePage($page, $otherPage, $locale);
+            }
+        }
+    }
+
+    public function pullMultilingualData()
+    {
+        $akcHandle = $this->getAttributeKeyCategoryHandle();
+        if($akcHandle == 'collection') {
+            $page = $this->getAttributeValueOwnerObject();
+            $mpRelationID = Section::getMultilingualPageRelationID($page->getCollectionID());
+            $locale = Section::getBySectionOfSite($page)->getLocale();
+            $db = \Database::get();
+
+            $multilingualRelations = $db->GetAll('select cID, mpLocale from MultilingualPageRelations where mpRelationID = ?', [$mpRelationID]);
+
+            foreach($multilingualRelations as $mr) {
+                $this->saveRelation($mr['mpLocale'], Page::getByID($mr['cID']));
+            }
+        }
+    }
 
 	public function saveForm($data)
 	{
-		return $this->saveValue($data);
+		$return = $this->saveValue($data);
+        $this->pushMultilingualData();
+
+        return $return;
 	}
 
 	public function saveRelation($language, $owner)
@@ -227,7 +263,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		$owner->setAttribute($this->getAttributeKey(), [
 			'value'=> $language,
 			'relationID' => $this->getRelationID()
-		]);	
+		]);
 	}
 
 	public function getSite()
@@ -246,6 +282,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 	public function getAttributeValueOwnerReferenceTableName()
 	{
 		if(!$this->getAttributeValueID()) return null;
+        //if(!$this->getAttributeValueObject()) return null;
 
 		$akcHandle = $this->getAttributeKeyCategoryHandle();
 		$metadata = $this->entityManager->getClassMetadata(get_class($this->getAttributeValue()));
@@ -256,6 +293,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 	public function getAttributeValueOwnerReferenceRow()
 	{
 		if(!$this->getAttributeValueID()) return null;
+        //if(!$this->getAttributeValueObject()) return null;
 
 		$valueRefRow = \Database::get()->GetRow('select * from ' . $this->getAttributeValueOwnerReferenceTableName() .' where avID = ' . $this->getAttributeValueID());
 		return $valueRefRow;
@@ -269,7 +307,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		if($akcHandle == 'collection')
 		{
 			return $valueRefRow ? $valueRefRow['cID'] : $this->request->get('cID');
-		} 
+		}
 		else if($akcHandle == 'file')
 		{
 			return $valueRefRow ? $valueRefRow['fID'] : $this->request->get('fID');
@@ -278,7 +316,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 
 	public function getAttributeValueOwnerObject()
 	{
-		
+
 		$akcHandle = $this->getAttributeKeyCategoryHandle();
 		$oID = $this->getAttributeValueOwnerID();
 		if($akcHandle == 'collection')
@@ -312,7 +350,11 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 			$repo = $this->entityManager->getRepository($class);
 			return $repo->findOneBy([$idField => $id]);
 		} else {
-			return $class::getByID($id);
+			$owner = $class::getByID($id);
+            if(!is_object($owner) || method_exists($owner, 'isError') && $owner->isError()) {
+                return null;
+            }
+            return $owner;
 		}
 	}
 
@@ -324,7 +366,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		if($avID) {
 			$relationID = $db->GetOne("select relationID from atLanguage where avID = ?", [$avID]);
 		}
-		
+
 		if(!$relationID && $autoCreate) {
 			$relationID = (new \Doctrine\ORM\Id\UuidGenerator())->generate($this->entityManager, $this->getAttributeValueID());
 		}
@@ -347,14 +389,14 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 
 	public function getRelationOwnerIDs()
 	{
-		$avID = $this->getAttributeValueID();
-		if(!$avID) return [];
+        $avID = $this->getAttributeValueID();
+        if(!$avID) return [];
 
-		$db = \Database::get();	
+		$db = \Database::get();
 		$valueReferences = $db->GetAll("select * from ". $this->getAttributeValueOwnerReferenceTableName() ." avRefTable right join (select avID from atLanguage where relationID = ? and avID <> ?) atLanguage on avRefTable.avID = atLanguage.avID", array($this->getRelationID(), $this->getAttributeValueID()));
 		//$relations = $this->getAttributeKeyCategory()->getAttributeValueRepository()->findBy(['avID' => $relationValueIDs]);
 		// GET OBJECTS BY avID
-		
+
 		$akcHandle = $this->getAttributeKeyCategoryHandle();
 		$relations = [];
 		foreach($valueReferences as $valueRef) {

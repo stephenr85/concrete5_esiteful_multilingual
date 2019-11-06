@@ -11,24 +11,24 @@
 
 	use Concrete\Package\EsitefulMultilingual\Helpers\PackageHelper;
 
-	/** 
-	 * This is the main controller for the package which controls the functionality like Install/Uninstall etc. 
-	 * 
-	 * @author Stephen Rushing, eSiteful 
-	 */ 
+	/**
+	 * This is the main controller for the package which controls the functionality like Install/Uninstall etc.
+	 *
+	 * @author Stephen Rushing, eSiteful
+	 */
 	class Controller extends Package {
 
 	/**
-	* Protected data members for controlling the instance of the package 
+	* Protected data members for controlling the instance of the package
 	*/
-	protected $pkgHandle = 'esiteful_multilingual'; 
+	protected $pkgHandle = 'esiteful_multilingual';
 	protected $appVersionRequired = '8.0.1';
 	protected $pkgVersion = '0.0.1';
 
 	/**
 	 * This function returns the functionality description ofthe package.
-	 * 
-	 * @param void 
+	 *
+	 * @param void
 	 * @return string $description
 	 * @author Stephen Rushing, eSiteful
 	 */
@@ -39,7 +39,7 @@
 
 	/**
 	 * This function returns the name of the package.
-	 * 
+	 *
 	 * @param void
 	 * @return string $name
 	 * @author Stephen Rushing, eSiteful
@@ -57,13 +57,20 @@
 		return $helper;
 	}
 
-	
+
 
 
 	public function on_start(){
 
 		$this->setupAutoloader();
 
+
+        \Events::addListener('on_multilingual_page_relate', function($event) {
+
+            $page = $event->getPageObject();
+            //$page->getAttributeValueObject('page_language', true)->getController()->pullMultilingualData();
+
+        });
 	}
 
 	/**
@@ -78,7 +85,7 @@
 
 	/**
 	 * This function is executed during initial installation of the package.
-	 * 
+	 *
 	 * @param void
 	 * @return void
 	 * @author Stephen Rushing, eSiteful
@@ -97,7 +104,7 @@
 
 	/**
 	 * This function is executed during upgrade of the package.
-	 * 
+	 *
 	 * @param void
 	 * @return void
 	 * @author Stephen Rushing, eSiteful
@@ -114,7 +121,7 @@
 
 	/**
 	 * This function is executed during uninstallation of the package.
-	 * 
+	 *
 	 * @param void
 	 * @return void
 	 * @author Stephen Rushing, eSiteful
@@ -127,10 +134,10 @@
 
 	/**
 	 * This function is used to install attribute types.
-	 * 
+	 *
 	 * @param type $pkg
 	 * @return void
-	 * @author Stephen Rushing, eSiteful 
+	 * @author Stephen Rushing, eSiteful
 	 */
 	function install_attribute_types($pkg){
 		$pkgHelper = $this->getPackageHelper();
@@ -141,10 +148,10 @@
 
 	/**
 	 * This function is used to install file attributes.
-	 * 
+	 *
 	 * @param type $pkg
 	 * @return void
-	 * @author Stephen Rushing, eSiteful 
+	 * @author Stephen Rushing, eSiteful
 	 */
 	function install_file_attributes($pkg){
 		$pkgHelper = $this->getPackageHelper();
@@ -157,14 +164,14 @@
 	}
 
 
-	
+
 
 	/**
 	 * This function is used to install page attributes.
-	 * 
+	 *
 	 * @param type $pkg
 	 * @return void
-	 * @author Stephen Rushing, eSiteful 
+	 * @author Stephen Rushing, eSiteful
 	 */
 	function install_page_attributes($pkg){
 		$pkgHelper = $this->getPackageHelper();
@@ -177,5 +184,5 @@
 	}
 
 
-	
+
 }
