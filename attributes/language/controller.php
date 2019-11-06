@@ -387,6 +387,16 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		$this->setRelationID(null);
 	}
 
+    public function getAttributeValueID()
+    {
+        $val = $this->getAttributeValue();
+        if(!is_object($val) || !is_object($val->getGenericValue())){
+            return null;
+        }
+        //\Doctrine\Common\Util\Debug::dump($this->getAttributeValue());die;
+        parent::getAttributeValueID();
+    }
+
 	public function getRelationOwnerIDs()
 	{
         $avID = $this->getAttributeValueID();
