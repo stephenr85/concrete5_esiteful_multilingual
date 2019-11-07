@@ -394,7 +394,7 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
             return null;
         }
         //\Doctrine\Common\Util\Debug::dump($this->getAttributeValue());die;
-        parent::getAttributeValueID();
+        return parent::getAttributeValueID();
     }
 
 	public function getRelationOwnerIDs()
