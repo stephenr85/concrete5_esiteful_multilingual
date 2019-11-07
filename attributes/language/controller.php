@@ -34,11 +34,10 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 
 	public function getValue($mode = false)
 	{
-		if($this->isValueInferred()) {
-			$value = $this->getInferredValue();
-		} else {
-			$value = $this->getRawValue();
-		}
+		$value = $this->getInferredValue();
+        if($value === false) {
+            $value = $this->getRawValue();
+        }
 		return $value;
 	}
 
@@ -60,9 +59,10 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 		$akcHandle = $this->getAttributeKeyCategoryHandle();
 		if($akcHandle == 'collection') {
 			$page = $this->getAttributeValueOwnerObject();
-			return Section::getBySectionOfSite($page)->getLocale();
+            $section = Section::getBySectionOfSite($page);
+			return is_object($section) ? $section->getLocale() : false;
 		}
-		return null;
+		return false;
 	}
 
 	public function isValueInferred()
