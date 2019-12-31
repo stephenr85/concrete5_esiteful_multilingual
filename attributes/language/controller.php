@@ -8,6 +8,7 @@ use Concrete\Core\Entity\Attribute\Key\Settings\EmptySettings;
 use Concrete\Core\File\File;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Backup\ContentImporter;
+use Concrete\Core\Search\ItemList\Database\AttributedItemList;
 
 class Controller extends AttributeTypeController implements SimpleTextExportableAttributeInterface
 {
@@ -77,6 +78,30 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 			'relation_id' => $this->getRelationID()
 		];
 	}
+
+    public function filterByAttribute(AttributedItemList $list, $value, $comparison = '=')
+    {
+        $query = $list->getQueryObject();
+        $column = 'ak_' . $this->attributeKey->getAttributeKeyHandle();
+        $isGuid = preg_match('/^-?\d{1,2}\.\d{6,}\s*,\s*-?\d{1,2}\.\d{6,}$/', $value);
+        if($isGuid) $column .= '_relation_id';
+        else $column .= '_code';
+
+        if(is_array($value)) {
+            if($comparison == '=') {
+                $query->andWhere($query->expr()->in($column, $query->createNamedParameter($value)));
+            } else {
+                $query->andWhere($query->expr()->notIn($column, $query->createNamedParameter($value)));
+            }
+        } else {
+            if($comparison == '=') {
+                $query->andWhere($query->expr()->eq($column, $query->createNamedParameter($value)));
+            } else {
+                $query->andWhere($query->expr()->neq($column, $query->createNamedParameter($value)));
+            }
+        }
+
+    }
 
 	public function getAttributeValueTextRepresentation()
 	{
