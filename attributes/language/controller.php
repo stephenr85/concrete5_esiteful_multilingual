@@ -1,6 +1,7 @@
 <?php
 namespace Concrete\Package\EsitefulMultilingual\Attribute\Language;
 
+use Core;
 use Concrete\Core\Attribute\Controller as AttributeTypeController;
 use Concrete\Core\Attribute\SimpleTextExportableAttributeInterface;
 use Concrete\Core\Multilingual\Page\Section\Section;
@@ -173,6 +174,23 @@ class Controller extends AttributeTypeController implements SimpleTextExportable
 			$this->set('relations', $this->getRelationsHash());
 		}
 	}
+
+    public function searchForm($list)
+    {
+        $this->filterByAttribute($list, $this->request('value'));
+        return $list;
+    }
+
+    public function searchKeywords($keywords, $queryBuilder)
+    {
+        return null;
+    }
+
+    public function search()
+    {
+        $f = Core::make('helper/form');
+        echo $f->text($this->field('value'), $this->request('value'));
+    }
 
 	// If a language or country code is passed, normalize it
 	public function normalizeValue($value)

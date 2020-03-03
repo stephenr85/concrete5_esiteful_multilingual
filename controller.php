@@ -23,7 +23,7 @@
 	*/
 	protected $pkgHandle = 'esiteful_multilingual';
 	protected $appVersionRequired = '8.0.1';
-	protected $pkgVersion = '0.0.1';
+	protected $pkgVersion = '0.0.2';
 
 	/**
 	 * This function returns the functionality description ofthe package.
@@ -159,11 +159,11 @@
 		$pkgHelper->upsertAttributeKey('file', null, 'language', array(
 			'akHandle'=>'file_language',
 			'akName'=>t('Language'),
+            'akIsSearchable' => 1,
+            'akIsSearchableIndexed' => 1,
 		));
 
 	}
-
-
 
 
 	/**
@@ -179,6 +179,8 @@
 		$pkgHelper->upsertAttributeKey('collection', null, 'language', array(
 			'akHandle'=>'page_language',
 			'akName'=>t('Language'),
+            'akIsSearchable' => 1,
+            'akIsSearchableIndexed' => 1,
 		));
 
 	}
